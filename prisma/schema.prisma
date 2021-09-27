@@ -1,0 +1,65 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id             Int          @id @default(autoincrement())
+  email          String       @unique
+  createdAt      DateTime     @default(now()) @map(name: "created_at")
+  updatedAt      DateTime     @default(now()) @map(name: "updated_at")
+  order          Order?
+  profile        Profile?
+  uuid           String       @unique @default(uuid())
+  firebaseUserId String       @unique @map(name: "firebase_user_id")
+
+  @@map(name: "users")
+}
+
+model Product {
+  id              Int    @id @default(autoincrement())
+  name            String
+  stripeProductId String @unique @map("stripe_product_id")
+  displayOrder    Int    @map("display_order")
+}
+
+model Profile {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique @map(name: "user_id")
+  user      User     @relation(fields: [userId], references: [id])
+  username  String
+  createdAt DateTime @default(now()) @map(name: "created_at")
+
+  @@map(name: "profiles")
+}
+
+enum PaymentMethod {
+  stripe
+  peatix
+  coupon
+}
+
+enum PaymentStatus {
+  paid
+  pending
+}
+
+model Order {
+  id            Int           @id @default(autoincrement())
+  user          User          @relation(fields: [userId], references: [id])
+  userId        Int           @unique @map(name: "user_id")
+  createdAt     DateTime      @default(now()) @map(name: "created_at")
+  paymentMethod PaymentMethod @map(name: "payment_method")
+  paymentId     String        @map(name: "payment_id")
+  paymentStatus PaymentStatus @map(name: "payment_status")
+  paidAmount    Int           @map(name: "paid_amount")
+
+  @@map("orders")
+}
